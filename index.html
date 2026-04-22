@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>数据集列表 · AI开放权限原型</title>
+<style>
+:root{
+  --primary:#4e6ef2;
+  --primary-light:#eef0fd;
+  --primary-hover:#3a5ae0;
+  --sidebar-bg:#f7f8fc;
+  --sidebar-active-bg:#e8ecfd;
+  --sidebar-active:#4e6ef2;
+  --sidebar-text:#4a5568;
+  --sidebar-icon:#9aa3b5;
+  --border:#e8eaf0;
+  --bg:#f5f6fa;
+  --white:#fff;
+  --text:#1a202c;
+  --text-muted:#718096;
+  --text-light:#a0aec0;
+  --success:#38a169;
+  --success-bg:#f0fff4;
+  --warning:#d69e2e;
+  --warning-bg:#fffff0;
+  --danger:#e53e3e;
+  --danger-bg:#fff5f5;
+  --tag-blue-bg:#ebf4ff;
+  --tag-blue:#3182ce;
+  --radius:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ── 顶栏 ── */
+.topbar{height:48px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.topbar-brand{font-size:15px;font-weight:700;color:var(--primary);margin-right:20px;white-space:nowrap;}
+.tabs{display:flex;align-items:stretch;gap:2px;flex:1;height:100%;}
+.tab{display:flex;align-items:center;gap:5px;padding:0 14px;font-size:12px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;}
+.tab:hover{color:var(--primary);}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+.tab .close{color:var(--text-light);margin-left:2px;font-size:14px;line-height:1;}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto;}
+.topbar-right a{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:3px;cursor:pointer;}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4e6ef2,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+
+/* ── 布局 ── */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* ── 侧栏 ── */
+.sidebar{width:168px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sidebar-section{padding:8px 0;}
+.sidebar-section+.sidebar-section{border-top:1px solid var(--border);}
+.sidebar-group{padding:8px 12px 4px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--sidebar-text);font-size:12px;font-weight:500;}
+.sidebar-group svg{color:var(--sidebar-icon);}
+.sidebar-group .arrow{margin-left:auto;color:var(--sidebar-icon);transition:transform .15s;}
+.sidebar-group.open .arrow{transform:rotate(90deg);}
+.sidebar-item{padding:6px 12px 6px 30px;font-size:12px;color:var(--sidebar-text);cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:0;}
+.sidebar-item:hover{background:#f0f2fb;color:var(--primary);}
+.sidebar-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active);font-weight:500;}
+.sidebar-top-item{padding:8px 12px;font-size:12px;color:var(--sidebar-text);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;}
+.sidebar-top-item:hover{background:#f0f2fb;color:var(--primary);}
+.sidebar-top-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active);}
+.sidebar-top-item svg{color:var(--sidebar-icon);flex-shrink:0;}
+.sidebar-top-item.active svg{color:var(--sidebar-active);}
+
+/* ── 主内容 ── */
+.main{flex:1;overflow-y:auto;padding:16px 20px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── 通用组件 ── */
+.page-title{font-size:16px;font-weight:600;margin-bottom:14px;}
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.toolbar-left{display:flex;gap:8px;flex:1;flex-wrap:wrap;align-items:center;}
+.toolbar-right{display:flex;gap:8px;align-items:center;}
+
+.inp{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);background:var(--white);outline:none;min-width:100px;}
+.inp:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(78,110,242,.15);}
+.sel{height:32px;padding:0 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);background:var(--white);cursor:pointer;}
+.sel:focus{border-color:var(--primary);outline:none;}
+
+.btn{height:32px;padding:0 14px;border-radius:var(--radius);border:none;cursor:pointer;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-hover);}
+.btn-default{background:var(--white);color:var(--text);border:1px solid var(--border);}
+.btn-default:hover{background:#f8f9ff;border-color:var(--primary);color:var(--primary);}
+.btn-success{background:#38a169;color:#fff;}
+.btn-success:hover{background:#2f855a;}
+.btn-warning{background:#d69e2e;color:#fff;}
+.btn-danger-outline{background:var(--white);color:var(--danger);border:1px solid var(--danger);}
+.btn-sm{height:26px;padding:0 10px;font-size:11px;}
+.btn-xs{height:22px;padding:0 8px;font-size:11px;border-radius:4px;}
+
+.card{background:var(--white);border-radius:8px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.card-pad{padding:16px 20px;}
+
+table{width:100%;border-collapse:collapse;}
+th{background:#f8f9fc;padding:9px 12px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 12px;font-size:12px;color:var(--text);border-bottom:1px solid #f0f1f5;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbff;}
+.tbl-wrap{background:var(--white);border-radius:8px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+.tbl-footer{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--white);border-top:1px solid var(--border);}
+.tbl-footer span{font-size:12px;color:var(--text-muted);}
+.pagination{display:flex;align-items:center;gap:4px;}
+.pagination button{width:26px;height:26px;border:1px solid var(--border);background:var(--white);border-radius:4px;cursor:pointer;font-size:12px;color:var(--text-muted);}
+.pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.pagination input{width:36px;height:26px;border:1px solid var(--border);border-radius:4px;text-align:center;font-size:12px;}
+
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;}
+.tag-blue{background:var(--tag-blue-bg);color:var(--tag-blue);}
+.tag-green{background:var(--success-bg);color:var(--success);}
+.tag-yellow{background:var(--warning-bg);color:var(--warning);}
+.tag-red{background:var(--danger-bg);color:var(--danger);}
+.tag-gray{background:#f7f8fa;color:#718096;}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;}
+
+.op-links{display:flex;align-items:center;gap:2px;}
+.op-link{color:var(--primary);cursor:pointer;padding:2px 5px;border-radius:3px;font-size:12px;white-space:nowrap;}
+.op-link:hover{background:var(--primary-light);}
+.op-link.danger{color:var(--danger);}
+.op-link.danger:hover{background:var(--danger-bg);}
+.op-link.muted{color:var(--text-muted);}
+.op-sep{color:var(--border);}
+
+/* ── 模态框 ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--white);border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;max-height:90vh;display:flex;flex-direction:column;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-size:14px;font-weight:600;}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-light);font-size:20px;line-height:1;padding:0;}
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;}
+
+/* ── 表单 ── */
+.form-row{margin-bottom:14px;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.form-label{display:block;font-size:12px;font-weight:500;margin-bottom:5px;color:var(--text);}
+.form-label .req{color:var(--danger);margin-left:2px;}
+.form-label .tip{font-weight:400;color:var(--text-muted);margin-left:4px;}
+.form-ctrl{width:100%;height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);}
+.form-ctrl:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 2px rgba(78,110,242,.12);}
+.form-ta{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text);resize:vertical;min-height:68px;line-height:1.6;}
+.form-ta:focus{border-color:var(--primary);outline:none;}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.section-block{background:var(--white);border-radius:8px;border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;}
+.section-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+
+/* toggle */
+.toggle{width:34px;height:18px;background:#cbd5e0;border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--primary);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle.on::after{left:18px;}
+
+/* 步骤条 */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:20px;}
+.step{display:flex;align-items:center;gap:6px;flex:1;}
+.step:last-child{flex:none;}
+.step-circle{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;border:2px solid var(--border);color:var(--text-muted);background:var(--white);}
+.step.done .step-circle{background:var(--primary);border-color:var(--primary);color:#fff;}
+.step.active .step-circle{background:var(--white);border-color:var(--primary);color:var(--primary);}
+.step-label{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+.step.done .step-label,.step.active .step-label{color:var(--primary);font-weight:500;}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 6px;}
+.step.done .step-line{background:var(--primary);}
+
+/* 告警块 */
+.alert{border-radius:6px;padding:10px 14px;font-size:12px;line-height:1.7;margin-bottom:12px;}
+.alert-warning{background:#fffbeb;border:1px solid #fcd34d;color:#92400e;}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+.alert-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+.alert-success{background:#f0fff4;border:1px solid #86efac;color:#166534;}
+
+/* 审批节点 */
+.approval-node{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--white);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;}
+.node-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;}
+.node-icon.pending{background:#f0f2fb;color:var(--primary);}
+.node-icon.done{background:var(--success-bg);color:var(--success);}
+.node-icon.waiting{background:#f7f8fa;color:var(--text-muted);}
+.node-body{flex:1;}
+.node-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.node-sub{font-size:11px;color:var(--text-muted);}
+.node-status{margin-left:auto;flex-shrink:0;}
+
+/* code */
+code{font-family:monospace;font-size:11px;background:#f1f3f9;color:var(--primary);padding:1px 5px;border-radius:3px;}
+.code-block{background:#1e2130;border-radius:6px;padding:14px;font-family:monospace;font-size:12px;color:#e2e8f0;line-height:1.8;overflow-x:auto;}
+.code-block .kw{color:#f1fa8c;}
+.code-block .str{color:#50fa7b;}
+.code-block .cm{color:#6272a4;}
+.code-block .hd{color:#ff79c6;}
+.code-block .nu{color:#bd93f9;}
+
+/* 数据预览弹窗 */
+.preview-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.preview-tab{padding:8px 16px;font-size:12px;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.preview-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+
+/* key卡片 */
+.key-display{background:#1e2130;border-radius:6px;padding:10px 14px;font-family:monospace;font-size:12px;color:#7dd3fc;display:flex;align-items:center;justify-content:space-between;word-break:break-all;margin-top:4px;}
+.key-display .copy-btn{color:var(--primary);cursor:pointer;font-family:sans-serif;font-size:11px;flex-shrink:0;margin-left:8px;background:none;border:none;}
+
+/* toast */
+.toast{position:fixed;top:60px;right:20px;background:#1e2130;color:#fff;padding:10px 16px;border-radius:7px;font-size:13px;z-index:999;display:none;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+.toast.show{display:flex;}
+
+/* spinner */
+.spin{width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 数值badge */
+.num-inp{width:80px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+  <div class="topbar-brand">BI 数据平台</div>
+  <div class="tabs">
+    <div class="tab">首页</div>
+    <div class="tab active">数据集列表 <span class="close">×</span></div>
+  </div>
+  <div class="topbar-right">
+    <a onclick="">□ 帮助中心</a>
+    <div class="avatar">云</div>
+  </div>
+</div>
+
+<div class="layout">
+<!-- 侧栏 -->
+<div class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-top-item" onclick="">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首页
+    </div>
+    <div class="sidebar-top-item">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>SQL任务
+      <svg class="arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="sidebar-top-item">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>算法平台
+      <svg class="arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-group open">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      BI
+      <svg class="arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="sidebar-item active" onclick="showPage('list')">数据集列表</div>
+    <div class="sidebar-item" onclick="">图表列表</div>
+    <div class="sidebar-item" onclick="">仪表盘列表</div>
+    <div class="sidebar-item" onclick="">数据集刷新日志</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-top-item">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      学习指南
+      <svg class="arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <div class="sidebar-top-item">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      审计
+      <svg class="arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- 主内容 -->
+<div class="main">
+
+<!-- ====== PAGE: 数据集列表 ====== -->
+<div id="page-list" class="page active">
+  <div class="page-title">数据集列表</div>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <span style="font-size:12px;color:var(--text-muted);">名称</span>
+      <input class="inp" placeholder="请选择名称" style="width:130px;">
+      <span style="font-size:12px;color:var(--text-muted);">项目</span>
+      <select class="sel" style="width:120px;"><option>请选择项目</option><option>财务报表</option><option>欢乐游戏人</option><option>迷雾三国</option></select>
+      <span style="font-size:12px;color:var(--text-muted);">创建人</span>
+      <select class="sel" style="width:110px;"><option>选择创建人</option><option>吉云飞</option></select>
+      <span style="font-size:12px;color:var(--text-muted);">更新时间</span>
+      <input class="inp" type="date" style="width:120px;">
+      <span style="color:var(--text-muted);">-</span>
+      <input class="inp" type="date" style="width:120px;">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-primary">⚙ 筛选</button>
+      <button class="btn btn-default">↺ 重置</button>
+    </div>
+  </div>
+  <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+    <button class="btn btn-primary btn-sm" onclick="showPage('create-dataset')">＋ 新增数据集</button>
+    <span style="font-size:12px;color:var(--text-muted);">已选字段(10/10)</span>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>名称</th><th>SQL</th><th>所属项目</th><th>连接源</th><th>数据库</th><th>创建人</th><th>创建时间 ↓</th><th>更新时间 ↓</th><th>备注</th><th style="min-width:220px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>充值中心订单数</strong></td>
+          <td><span style="color:var(--primary);font-family:monospace;font-size:11px;cursor:pointer;">with a as(← 取七日订单均...</span></td>
+          <td>财务报表</td>
+          <td>数据仓库-云立方_财务...</td>
+          <td>finance_ads</td>
+          <td><span style="color:var(--primary);cursor:pointer;">吉云飞</span></td>
+          <td style="white-space:nowrap;">2025-08-19 18:40:00</td>
+          <td style="white-space:nowrap;">2025-09-02 17:47:06</td>
+          <td></td>
+          <td>
+            <div class="op-links">
+              <span class="op-link">编辑</span><span class="op-sep">|</span>
+              <span class="op-link danger">删除</span><span class="op-sep">|</span>
+              <span class="op-link muted">转发</span><span class="op-sep">|</span>
+              <span class="op-link" style="color:#7c3aed;font-weight:500;" onclick="showPage('apply-open')">申请开放AI权限</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>赛赛军团运营总表-...</strong></td>
+          <td><span style="color:var(--primary);font-family:monospace;font-size:11px;cursor:pointer;">select log_date 日期, toda...</span></td>
+          <td>欢乐游戏人</td>
+          <td>阿里云_上海_国内...</td>
+          <td>ssjt_ads</td>
+          <td><span style="color:var(--primary);cursor:pointer;">吉云飞</span></td>
+          <td style="white-space:nowrap;">2024-06-28 17:02:06</td>
+          <td style="white-space:nowrap;">2024-07-04 10:48:28</td>
+          <td></td>
+          <td>
+            <div class="op-links">
+              <span class="op-link">编辑</span><span class="op-sep">|</span>
+              <span class="op-link danger">删除</span><span class="op-sep">|</span>
+              <span class="op-link muted">转发</span><span class="op-sep">|</span>
+              <span class="op-link" style="color:#7c3aed;font-weight:500;" onclick="showPage('apply-open')">申请开放AI权限</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>迷雾三国总表-交叉表</strong></td>
+          <td><span style="color:var(--primary);font-family:monospace;font-size:11px;cursor:pointer;">select date(log_date) 日期...</span></td>
+          <td>迷雾三国</td>
+          <td>阿里云_上海_国内...</td>
+          <td>mwsg_ads</td>
+          <td><span style="color:var(--primary);cursor:pointer;">吉云飞</span></td>
+          <td style="white-space:nowrap;">2024-06-28 16:54:18</td>
+          <td style="white-space:nowrap;">2024-06-28 16:56:10</td>
+          <td></td>
+          <td>
+            <div class="op-links">
+              <span class="op-link">编辑</span><span class="op-sep">|</span>
+              <span class="op-link danger">删除</span><span class="op-sep">|</span>
+              <span class="op-link muted">转发</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <strong>充值中心订单数</strong>
+              <span class="tag tag-blue">已开放</span>
+            </div>
+          </td>
+          <td><span style="color:var(--primary);font-family:monospace;font-size:11px;cursor:pointer;">select 1</span></td>
+          <td></td>
+          <td>数据仓库-云立方_数...</td>
+          <td></td>
+          <td><span style="color:var(--primary);cursor:pointer;">吉云飞</span></td>
+          <td style="white-space:nowrap;">2024-06-21 12:10:11</td>
+          <td style="white-space:nowrap;">2024-06-21 12:10:11</td>
+          <td></td>
+          <td>
+            <div class="op-links">
+              <span class="op-link">编辑</span><span class="op-sep">|</span>
+              <span class="op-link danger">删除</span><span class="op-sep">|</span>
+              <span class="op-link muted">转发</span><span class="op-sep">|</span>
+              <span class="op-link" style="color:#7c3aed;" onclick="showPage('key-manage')">Key管理</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <span>共 4 条　<select class="sel" style="height:24px;padding:0 6px;font-size:11px;"><option>20条/页</option></select></span>
+      <div class="pagination">
+        <button>‹</button><button class="active">1</button><button>›</button>
+        <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">前往</span>
+        <input value="1"><span style="font-size:11px;color:var(--text-muted);">页</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: 申请开放AI权限（配置页）====== -->
+<div id="page-apply-open" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('list')">← 数据集列表</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">申请开放 AI 权限 — 充值中心订单数</span>
+  </div>
+
+  <!-- 步骤条 -->
+  <div class="steps">
+    <div class="step active"><div class="step-circle">1</div><div class="step-label">配置开放信息</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-circle">2</div><div class="step-label">提交审批</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-circle">3</div><div class="step-label">审批通过</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;">
+    <div>
+      <!-- 数据字典 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>📖 数据字典 <span style="font-size:11px;color:var(--danger);font-weight:400;">* 需补齐后方可提交审批</span></span>
+          <span id="dict-status" class="tag tag-red"><span class="dot"></span>未完成（3/6）</span>
+        </div>
+        <div class="alert alert-warning">
+          ⚠️ 数据字典用于帮助 AI 理解字段含义，提升查询准确率。请为每个字段填写业务含义，标注是否含敏感信息。
+        </div>
+        <table>
+          <thead><tr><th>字段名</th><th>字段类型</th><th>业务含义<span style="color:var(--danger);">*</span></th><th>是否敏感</th><th>脱敏规则</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>log_date</code></td><td style="color:var(--text-muted);">DATE</td>
+              <td><input class="inp" value="日期" style="width:100%;"></td>
+              <td><select class="sel" style="width:70px;"><option>否</option><option>是</option></select></td>
+              <td style="color:var(--text-muted);">—</td>
+            </tr>
+            <tr>
+              <td><code>total_amount</code></td><td style="color:var(--text-muted);">DECIMAL</td>
+              <td><input class="inp" value="充值总金额(元)" style="width:100%;"></td>
+              <td><select class="sel" style="width:70px;"><option>否</option><option>是</option></select></td>
+              <td style="color:var(--text-muted);">—</td>
+            </tr>
+            <tr>
+              <td><code>order_cnt</code></td><td style="color:var(--text-muted);">INT</td>
+              <td><input class="inp" value="订单总数" style="width:100%;"></td>
+              <td><select class="sel" style="width:70px;"><option>否</option><option>是</option></select></td>
+              <td style="color:var(--text-muted);">—</td>
+            </tr>
+            <tr>
+              <td><code>user_id</code></td><td style="color:var(--text-muted);">STRING</td>
+              <td><input class="inp" placeholder="请填写业务含义" style="width:100%;border-color:#fca5a5;" oninput="updateDict()"></td>
+              <td><select class="sel" style="width:70px;"><option>否</option><option selected>是</option></select></td>
+              <td><select class="sel" style="width:90px;"><option>手机号脱敏</option><option>ID脱敏</option><option selected>UID截断</option></select></td>
+            </tr>
+            <tr>
+              <td><code>channel</code></td><td style="color:var(--text-muted);">STRING</td>
+              <td><input class="inp" placeholder="请填写业务含义" style="width:100%;border-color:#fca5a5;" oninput="updateDict()"></td>
+              <td><select class="sel" style="width:70px;"><option selected>否</option><option>是</option></select></td>
+              <td style="color:var(--text-muted);">—</td>
+            </tr>
+            <tr>
+              <td><code>pay_type</code></td><td style="color:var(--text-muted);">STRING</td>
+              <td><input class="inp" placeholder="请填写业务含义" style="width:100%;border-color:#fca5a5;" oninput="updateDict()"></td>
+              <td><select class="sel" style="width:70px;"><option selected>否</option><option>是</option></select></td>
+              <td style="color:var(--text-muted);">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 业务备注 -->
+      <div class="section-block">
+        <div class="section-title">📝 业务备注 <span style="font-size:11px;color:var(--danger);font-weight:400;">* 必填</span></div>
+        <div class="form-row">
+          <label class="form-label">数据集用途说明<span class="req">*</span><span class="tip">（AI调用方需了解该数据集的业务场景）</span></label>
+          <textarea class="form-ta" placeholder="例：用于统计各渠道每日充值订单量和金额，数据来源为充值流水表，按日聚合。">用于统计各渠道每日充值订单量和总金额，数据来源为充值流水表 finance_ads.pay_order_total，每日聚合更新，供运营分析使用。</textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">数据更新频率</label>
+          <select class="form-ctrl"><option>每日凌晨更新</option><option>实时</option><option>每小时</option><option>手动触发</option></select>
+        </div>
+      </div>
+
+      <!-- 开放配置 -->
+      <div class="section-block">
+        <div class="section-title">⚙️ 开放配置</div>
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">单次返回上限<span class="tip">（默认 10,000 条）</span></label>
+            <input class="form-ctrl" type="number" value="10000">
+            <div class="form-hint">≤10,000 条返回 JSON；超出则返回文件（压缩包）</div>
+          </div>
+          <div>
+            <label class="form-label">日调用上限<span class="tip">（每个 Key）</span></label>
+            <input class="form-ctrl" type="number" value="100">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：预览 + 提交 -->
+    <div>
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px;">数据预览</div>
+        <div class="alert alert-info" style="margin-bottom:10px;">提交前可预览数据结构和抽样数据，确认字段无误。</div>
+        <div style="display:flex;gap:8px;flex-direction:column;">
+          <button class="btn btn-default" style="width:100%;justify-content:center;" onclick="openModal('modal-preview');showPreviewTab('structure')">
+            📋 预览数据结构
+          </button>
+          <button class="btn btn-default" style="width:100%;justify-content:center;" onclick="openModal('modal-preview');showPreviewTab('sample')">
+            🔍 预览抽样数据
+          </button>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="section-title" style="margin-bottom:10px;">提交说明</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.8;margin-bottom:12px;">
+          提交后将发起两级审批：<br>
+          1️⃣ 项目负责人审批<br>
+          2️⃣ 数据部负责人审批<br><br>
+          审批通过后您将成为该数据集的 AI 管理员，可管理 Key 及调用配置。
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitApply()">
+          提交审批申请
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: 审批列表 ====== -->
+<div id="page-approval" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('apply-open')">← 返回配置页</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">审批进度 — 充值中心订单数</span>
+  </div>
+
+  <!-- 步骤条 -->
+  <div class="steps">
+    <div class="step done"><div class="step-circle">✓</div><div class="step-label">配置开放信息</div></div>
+    <div class="step-line done"></div>
+    <div class="step active"><div class="step-circle">2</div><div class="step-label">提交审批</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-circle">3</div><div class="step-label">审批通过</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;">
+    <div>
+      <div class="alert alert-info">
+        ℹ️ 审批申请已提交（2026-04-22 18:00），等待项目负责人审批中。
+      </div>
+
+      <!-- 节点1: 项目负责人 -->
+      <div class="approval-node" style="border-color:var(--primary);box-shadow:0 0 0 2px rgba(78,110,242,.1);">
+        <div class="node-icon pending">张</div>
+        <div class="node-body">
+          <div class="node-title">审批人1 · 项目负责人</div>
+          <div class="node-sub">张经理 · 财务报表项目负责人 · 待审批</div>
+          <div class="alert alert-warning" style="margin-top:10px;margin-bottom:6px;">
+            ⚠️ 数据风险提示：该数据集包含 <strong>充值金额、用户ID</strong> 等敏感字段，审批通过后数据将可能被外部 AI 系统调用。请确认数据脱敏配置已正确设置，评估数据外传风险后再审批。
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-default btn-sm" onclick="openModal('modal-review-data');showPreviewTab('structure')">查看数据结构</button>
+            <button class="btn btn-default btn-sm" onclick="openModal('modal-review-data');showPreviewTab('sample')">查看抽样数据</button>
+            <button class="btn btn-success btn-sm" onclick="approveNode1()">✓ 通过</button>
+            <button class="btn btn-danger-outline btn-sm">✗ 驳回</button>
+          </div>
+        </div>
+        <div class="node-status"><span class="tag tag-blue"><span class="dot"></span>审批中</span></div>
+      </div>
+
+      <!-- 节点2: 数据部负责人 -->
+      <div class="approval-node" style="opacity:.55;">
+        <div class="node-icon waiting">李</div>
+        <div class="node-body">
+          <div class="node-title">审批人2 · 数据部负责人</div>
+          <div class="node-sub">李总监 · 数据产品部 · 等待上一级审批完成</div>
+        </div>
+        <div class="node-status"><span class="tag tag-gray"><span class="dot"></span>待触发</span></div>
+      </div>
+    </div>
+
+    <!-- 右侧摘要 -->
+    <div>
+      <div class="section-block" style="font-size:12px;color:var(--text-muted);line-height:2;">
+        <div class="section-title" style="margin-bottom:8px;">申请摘要</div>
+        <div>数据集：<strong style="color:var(--text)">充值中心订单数</strong></div>
+        <div>申请人：<strong style="color:var(--text)">吉云飞</strong></div>
+        <div>申请时间：<strong style="color:var(--text)">2026-04-22</strong></div>
+        <div>字段数：<strong style="color:var(--text)">6</strong></div>
+        <div>含敏感字段：<strong style="color:var(--danger)">是（user_id）</strong></div>
+        <div>单次上限：<strong style="color:var(--text)">10,000 条</strong></div>
+        <div>日调用上限：<strong style="color:var(--text)">100 次/Key</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: Key 管理 ====== -->
+<div id="page-key-manage" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('list')">← 数据集列表</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">Key 管理 — 充值中心订单数</span>
+    <span class="tag tag-blue" style="margin-left:4px;">我是管理员</span>
+  </div>
+
+  <!-- API 文档入口 -->
+  <div class="alert alert-info" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>📄 接入前请先阅读 API 文档，了解鉴权方式、接口格式与错误码。</span>
+    <button class="btn btn-default btn-sm" onclick="showPage('api-doc')">查看 API 文档 →</button>
+  </div>
+
+  <!-- 缓存配置 -->
+  <div class="section-block" style="margin-bottom:14px;">
+    <div class="section-title">
+      💾 缓存配置
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <span style="font-size:12px;color:var(--text-muted);">启用每日缓存</span>
+        <div class="toggle on" id="toggleCache" onclick="this.classList.toggle('on')"></div>
+      </label>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+      启用后每日凌晨 <strong>4:00</strong> 自动执行 SQL 并将结果缓存为文件，日间请求直接读缓存（响应更快，数据非实时）。
+      禁用则每次请求实时执行 SQL。
+    </div>
+  </div>
+
+  <!-- 用户列表 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:600;">授权用户列表</div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')">＋ 添加用户</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>用户</th><th>部门</th><th>Key（脱敏）</th><th>日调用上限</th><th>并发上限</th><th>有效期</th><th>状态</th><th>今日调用</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>张三</strong></td>
+          <td>产品技术部</td>
+          <td><code>dk_a7f3...7f3a</code></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input class="num-inp" value="100"> <span style="color:var(--text-muted);">次</span>
+              <span style="font-size:10px;color:var(--text-muted);">上限500</span>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input class="num-inp" value="5"> <span style="color:var(--text-muted);">个</span>
+              <span style="font-size:10px;color:var(--text-muted);">上限10</span>
+            </div>
+          </td>
+          <td>2026-10-22</td>
+          <td><span class="tag tag-green"><span class="dot"></span>有效</span></td>
+          <td>
+            <div>62 / 100</div>
+            <div style="width:70px;height:4px;background:#e8eaf0;border-radius:2px;margin-top:3px;"><div style="width:62%;height:100%;background:var(--primary);border-radius:2px;"></div></div>
+          </td>
+          <td><div class="op-links">
+            <span class="op-link" onclick="openModal('modal-view-key')">查看Key</span><span class="op-sep">|</span>
+            <span class="op-link" onclick="showPage('call-log')">日志</span><span class="op-sep">|</span>
+            <span class="op-link danger">吊销</span>
+          </div></td>
+        </tr>
+        <tr>
+          <td><strong>王五</strong></td>
+          <td>数据产品部</td>
+          <td><code>dk_9c2e...3b8d</code></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input class="num-inp" value="200"> <span style="color:var(--text-muted);">次</span>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input class="num-inp" value="5"> <span style="color:var(--text-muted);">个</span>
+            </div>
+          </td>
+          <td>2026-10-22</td>
+          <td><span class="tag tag-green"><span class="dot"></span>有效</span></td>
+          <td>
+            <div>18 / 200</div>
+            <div style="width:70px;height:4px;background:#e8eaf0;border-radius:2px;margin-top:3px;"><div style="width:9%;height:100%;background:var(--success);border-radius:2px;"></div></div>
+          </td>
+          <td><div class="op-links">
+            <span class="op-link" onclick="openModal('modal-view-key')">查看Key</span><span class="op-sep">|</span>
+            <span class="op-link">日志</span><span class="op-sep">|</span>
+            <span class="op-link danger">吊销</span>
+          </div></td>
+        </tr>
+        <tr style="opacity:.5;">
+          <td><strong>李四</strong></td>
+          <td>海外运营</td>
+          <td><code>—</code></td>
+          <td>100</td><td>5</td>
+          <td>2026-04-01</td>
+          <td><span class="tag tag-red"><span class="dot"></span>已过期</span></td>
+          <td style="color:var(--text-muted);">—</td>
+          <td><div class="op-links"><span class="op-link muted">查看日志</span></div></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <span>共 3 条</span>
+      <div class="pagination"><button>‹</button><button class="active">1</button><button>›</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: API 文档 ====== -->
+<div id="page-api-doc" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('key-manage')">← Key 管理</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">API 接入文档</span>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">📌 概述</div>
+    <p style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+      数据集开放 API 允许持有有效 Key 的系统通过标准 HTTP 接口查询指定数据集的数据。API 仅供内网调用，请在公司网络或 VPN 下使用。
+    </p>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:7px 12px;font-size:12px;color:#1e40af;">
+        🌐 Base URL：<code style="background:transparent;color:#1e40af;">https://data-api.987ht.net</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">🔑 鉴权</div>
+    <div class="code-block">
+      <span class="hd">Authorization:</span> Bearer dk_live_a7f3c9e2b8d104...
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">📥 查询接口</div>
+    <div class="code-block" style="margin-bottom:10px;"><span class="kw">GET</span> /v1/dataset/<span class="str">{dataset_id}</span>/query?limit=<span class="nu">100</span>&offset=<span class="nu">0</span></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">返回示例（≤10,000 条返回 JSON，超出返回文件下载链接）：</div>
+    <div class="code-block">
+      {<br>
+      &nbsp;&nbsp;<span class="kw">"code"</span>: <span class="nu">0</span>, <span class="kw">"msg"</span>: <span class="str">"ok"</span>,<br>
+      &nbsp;&nbsp;<span class="kw">"data"</span>: {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">"total"</span>: <span class="nu">7</span>, <span class="kw">"rows"</span>: [{...}],<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">"cached"</span>: <span class="str">false</span>, <span class="kw">"file_url"</span>: <span class="str">null</span> <span class="cm">// 超量时有值</span><br>
+      &nbsp;&nbsp;}<br>
+      }
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">⚠️ 错误码</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>HTTP</th><th>code</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--success);">200</td><td>0</td><td>成功</td></tr>
+          <tr><td style="color:var(--danger);">401</td><td>10001-3</td><td>Token 无效 / 过期 / 已吊销</td></tr>
+          <tr><td style="color:var(--danger);">403</td><td>10004</td><td>Key 无权访问该数据集</td></tr>
+          <tr><td style="color:var(--warning);">429</td><td>10005-6</td><td>并发超限 / 日调用超限</td></tr>
+          <tr><td style="color:#7c3aed;">500</td><td>20001</td><td>数据库查询异常</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: 调用日志 ====== -->
+<div id="page-call-log" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('key-manage')">← Key 管理</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">调用日志 — 充值中心订单数</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+    <div class="card card-pad" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">今日总调用</div>
+      <div style="font-size:22px;font-weight:700;color:var(--primary);">80</div>
+    </div>
+    <div class="card card-pad" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">成功率</div>
+      <div style="font-size:22px;font-weight:700;color:var(--success);">100%</div>
+    </div>
+    <div class="card card-pad" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">平均响应时间</div>
+      <div style="font-size:22px;font-weight:700;">142<span style="font-size:13px;font-weight:400;">ms</span></div>
+    </div>
+    <div class="card card-pad" style="text-align:center;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">今日限流次数</div>
+      <div style="font-size:22px;font-weight:700;color:var(--danger);">0</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <select class="sel"><option>全部用户</option><option>张三</option><option>王五</option></select>
+    <select class="sel"><option>全部状态</option><option>200 成功</option><option>429 限流</option><option>401 鉴权失败</option></select>
+    <input class="inp" type="date" value="2026-04-22" style="width:130px;">
+    <span style="color:var(--text-muted);">—</span>
+    <input class="inp" type="date" value="2026-04-22" style="width:130px;">
+    <button class="btn btn-primary btn-sm">查询</button>
+    <button class="btn btn-default btn-sm">↓ 导出</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>时间</th><th>用户</th><th>IP</th><th>参数</th><th>状态</th><th>响应时间</th><th>返回行数</th><th>缓存命中</th></tr></thead>
+      <tbody>
+        <tr><td style="white-space:nowrap;">2026-04-22 17:42:33</td><td>张三</td><td style="color:var(--text-muted);font-size:11px;">10.0.1.42</td><td><code>limit=100</code></td><td><span style="color:var(--success);font-weight:600;">200</span></td><td>142ms</td><td>7</td><td><span class="tag tag-gray">否</span></td></tr>
+        <tr><td style="white-space:nowrap;">2026-04-22 17:39:11</td><td>王五</td><td style="color:var(--text-muted);font-size:11px;">10.0.2.18</td><td><code>limit=50</code></td><td><span style="color:var(--success);font-weight:600;">200</span></td><td>98ms</td><td>7</td><td><span class="tag tag-green">是</span></td></tr>
+        <tr><td style="white-space:nowrap;">2026-04-22 17:30:55</td><td>张三</td><td style="color:var(--text-muted);font-size:11px;">10.0.1.42</td><td><code>limit=100</code></td><td><span style="color:var(--success);font-weight:600;">200</span></td><td>155ms</td><td>7</td><td><span class="tag tag-gray">否</span></td></tr>
+        <tr><td style="white-space:nowrap;">2026-04-22 17:22:18</td><td>—</td><td style="color:var(--text-muted);font-size:11px;">1.2.3.4</td><td>—</td><td><span style="color:var(--danger);font-weight:600;">401</span></td><td>3ms</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <span>共 80 条</span>
+      <div class="pagination"><button>‹</button><button class="active">1</button><button>2</button><button>›</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE: 新建数据集（保留原有功能）====== -->
+<div id="page-create-dataset" class="page">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <span style="color:var(--primary);cursor:pointer;font-size:12px;" onclick="showPage('list')">← 数据集列表</span>
+    <span style="color:var(--text-muted);">›</span>
+    <span style="font-size:14px;font-weight:600;">新增数据集</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;">
+    <div>
+      <div class="section-block">
+        <div class="section-title">基础信息</div>
+        <div class="form-row-2">
+          <div><label class="form-label">数据集名称<span class="req">*</span></label><input class="form-ctrl" placeholder="请输入名称"></div>
+          <div><label class="form-label">所属项目<span class="req">*</span></label><select class="form-ctrl"><option>请选择</option><option>财务报表</option><option>欢乐游戏人</option></select></div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">SQL 查询<span class="req">*</span></label>
+          <textarea class="form-ta" style="height:90px;font-family:monospace;">select log_date, sum(pay_amount) as total_amount, count(*) as order_cnt
+from finance_ads.pay_order_total
+where log_date >= date_sub(now(), interval 7 day)
+group by log_date</textarea>
+        </div>
+        <div class="form-row-2">
+          <div><label class="form-label">连接源<span class="req">*</span></label><select class="form-ctrl"><option>数据仓库-云立方_财务</option></select></div>
+          <div><label class="form-label">数据库<span class="req">*</span></label><select class="form-ctrl"><option>finance_ads</option></select></div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">备注</label>
+          <input class="form-ctrl" placeholder="可选">
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-default" style="flex:1;justify-content:center;" onclick="showPage('list')">取消</button>
+        <button class="btn btn-primary" style="flex:2;justify-content:center;" onclick="showPage('list');showToast('数据集已保存')">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ====== Modal: 数据预览 ====== -->
+<div class="modal-overlay" id="modal-preview">
+  <div class="modal" style="width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">数据预览 — 充值中心订单数</div>
+      <button class="modal-close" onclick="closeModal('modal-preview')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="preview-tabs">
+        <div class="preview-tab active" id="tab-structure" onclick="showPreviewTab('structure')">数据结构</div>
+        <div class="preview-tab" id="tab-sample" onclick="showPreviewTab('sample')">抽样数据（10条）</div>
+      </div>
+      <div id="preview-structure">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>字段名</th><th>类型</th><th>业务含义</th><th>是否敏感</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><code>log_date</code></td><td>DATE</td><td>日期</td><td>否</td></tr>
+              <tr><td>2</td><td><code>total_amount</code></td><td>DECIMAL</td><td>充值总金额(元)</td><td>否</td></tr>
+              <tr><td>3</td><td><code>order_cnt</code></td><td>INT</td><td>订单总数</td><td>否</td></tr>
+              <tr><td>4</td><td><code>user_id</code></td><td>STRING</td><td>—（待填写）</td><td><span class="tag tag-red">是</span></td></tr>
+              <tr><td>5</td><td><code>channel</code></td><td>STRING</td><td>—（待填写）</td><td>否</td></tr>
+              <tr><td>6</td><td><code>pay_type</code></td><td>STRING</td><td>—（待填写）</td><td>否</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="preview-sample" style="display:none;">
+        <div class="alert alert-info" style="margin-bottom:10px;">以下为最近 10 条数据，敏感字段已脱敏处理。</div>
+        <div class="tbl-wrap" style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>log_date</th><th>total_amount</th><th>order_cnt</th><th>user_id</th><th>channel</th><th>pay_type</th></tr></thead>
+            <tbody>
+              <tr><td>2026-04-22</td><td>128,500.00</td><td>342</td><td>u_****89af</td><td>ios</td><td>apple_pay</td></tr>
+              <tr><td>2026-04-21</td><td>115,200.00</td><td>298</td><td>u_****12bc</td><td>android</td><td>wechat</td></tr>
+              <tr><td>2026-04-20</td><td>132,800.00</td><td>361</td><td>u_****45de</td><td>ios</td><td>apple_pay</td></tr>
+              <tr><td>2026-04-19</td><td>98,400.00</td><td>267</td><td>u_****78ef</td><td>h5</td><td>alipay</td></tr>
+              <tr><td>2026-04-18</td><td>145,600.00</td><td>389</td><td>u_****01gh</td><td>ios</td><td>apple_pay</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-preview')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Modal: 审批看数（同预览）====== -->
+<div class="modal-overlay" id="modal-review-data">
+  <div class="modal" style="width:680px;">
+    <div class="modal-header">
+      <div class="modal-title">查看数据 — 充值中心订单数</div>
+      <button class="modal-close" onclick="closeModal('modal-review-data')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="preview-tabs">
+        <div class="preview-tab active" id="tab-structure2" onclick="showPreviewTab2('structure')">数据结构</div>
+        <div class="preview-tab" id="tab-sample2" onclick="showPreviewTab2('sample')">抽样数据</div>
+      </div>
+      <div id="preview-structure2">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>字段名</th><th>类型</th><th>业务含义</th><th>是否敏感</th><th>脱敏规则</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><code>log_date</code></td><td>DATE</td><td>日期</td><td>否</td><td>—</td></tr>
+              <tr><td>2</td><td><code>total_amount</code></td><td>DECIMAL</td><td>充值总金额(元)</td><td>否</td><td>—</td></tr>
+              <tr><td>3</td><td><code>order_cnt</code></td><td>INT</td><td>订单总数</td><td>否</td><td>—</td></tr>
+              <tr><td>4</td><td><code>user_id</code></td><td>STRING</td><td>用户唯一标识</td><td><span class="tag tag-red">是</span></td><td>UID截断</td></tr>
+              <tr><td>5</td><td><code>channel</code></td><td>STRING</td><td>渠道来源</td><td>否</td><td>—</td></tr>
+              <tr><td>6</td><td><code>pay_type</code></td><td>STRING</td><td>支付方式</td><td>否</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div id="preview-sample2" style="display:none;">
+        <div class="alert alert-warning" style="margin-bottom:10px;">⚠️ 抽样数据仅供审批参考，敏感字段已做脱敏处理。</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>log_date</th><th>total_amount</th><th>order_cnt</th><th>user_id</th><th>channel</th><th>pay_type</th></tr></thead>
+            <tbody>
+              <tr><td>2026-04-22</td><td>128,500.00</td><td>342</td><td>u_****89af</td><td>ios</td><td>apple_pay</td></tr>
+              <tr><td>2026-04-21</td><td>115,200.00</td><td>298</td><td>u_****12bc</td><td>android</td><td>wechat</td></tr>
+              <tr><td>2026-04-20</td><td>132,800.00</td><td>361</td><td>u_****45de</td><td>ios</td><td>apple_pay</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-success" onclick="approveNode1();closeModal('modal-review-data')">✓ 审批通过</button>
+      <button class="btn btn-default" onclick="closeModal('modal-review-data')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Modal: 添加用户 ====== -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal" style="width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">添加授权用户</div>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">×</button>
+    </div>
+    <div class="modal-body" id="add-user-body">
+      <div class="form-row">
+        <label class="form-label">搜索用户<span class="req">*</span></label>
+        <input class="form-ctrl" placeholder="输入姓名或工号搜索">
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">日调用上限<span class="tip">（默认 100，上限 500）</span></label>
+          <input class="form-ctrl" type="number" value="100">
+        </div>
+        <div>
+          <label class="form-label">并发上限<span class="tip">（默认 5，上限 10）</span></label>
+          <input class="form-ctrl" type="number" value="5">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">有效期</label>
+        <select class="form-ctrl"><option>6个月</option><option>1年</option><option>永久</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modal-add-user')">取消</button>
+      <button class="btn btn-primary" onclick="doAddUser()">生成 Key 并授权</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Modal: 查看 Key ====== -->
+<div class="modal-overlay" id="modal-view-key">
+  <div class="modal" style="width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">查看 Key — 张三</div>
+      <button class="modal-close" onclick="closeModal('modal-view-key')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">API Key</label>
+        <div class="key-display">
+          dk_live_a7f3c9e2b8d1047f3a9c2e8b1d047f3a
+          <button class="copy-btn" onclick="showToast('已复制到剪贴板')">复制</button>
+        </div>
+        <div class="form-hint">⚠️ 请通过安全渠道发送给持有人，勿在群聊中传递</div>
+      </div>
+      <div style="background:#f8f9fc;border-radius:6px;padding:12px;font-family:monospace;font-size:11px;color:var(--text);line-height:1.7;margin-top:4px;">
+        curl -X GET "https://data-api.987ht.net/v1/dataset/ds_001/query" \<br>
+        &nbsp;&nbsp;-H "Authorization: Bearer dk_live_a7f3..."
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger-outline btn-sm" onclick="showToast('Key 已吊销');closeModal('modal-view-key')">吊销此 Key</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-default" onclick="closeModal('modal-view-key')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ <span id="toast-msg"></span></div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  // sidebar active
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  if (name === 'list') document.querySelector('.sidebar-item').classList.add('active');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function showPreviewTab(tab) {
+  document.getElementById('preview-structure').style.display = tab === 'structure' ? '' : 'none';
+  document.getElementById('preview-sample').style.display = tab === 'sample' ? '' : 'none';
+  document.getElementById('tab-structure').classList.toggle('active', tab === 'structure');
+  document.getElementById('tab-sample').classList.toggle('active', tab === 'sample');
+}
+function showPreviewTab2(tab) {
+  document.getElementById('preview-structure2').style.display = tab === 'structure' ? '' : 'none';
+  document.getElementById('preview-sample2').style.display = tab === 'sample' ? '' : 'none';
+  document.getElementById('tab-structure2').classList.toggle('active', tab === 'structure');
+  document.getElementById('tab-sample2').classList.toggle('active', tab === 'sample');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function updateDict() {
+  // 简单模拟：检查未填字段数
+  const inputs = document.querySelectorAll('#page-apply-open tbody input.inp');
+  let empty = 0;
+  inputs.forEach(i => { if (!i.value.trim()) empty++; });
+  const el = document.getElementById('dict-status');
+  const total = inputs.length;
+  const done = total - empty;
+  if (empty === 0) {
+    el.className = 'tag tag-green';
+    el.innerHTML = '<span class="dot"></span>已完成';
+  } else {
+    el.className = 'tag tag-red';
+    el.innerHTML = `<span class="dot"></span>未完成（${done}/${total}）`;
+  }
+}
+
+function submitApply() {
+  const inputs = document.querySelectorAll('#page-apply-open tbody input.inp');
+  let empty = 0;
+  inputs.forEach(i => { if (!i.value.trim()) empty++; });
+  if (empty > 0) {
+    showToast('请先补齐数据字典中所有字段的业务含义');
+    return;
+  }
+  showPage('approval');
+}
+
+function approveNode1() {
+  // 模拟节点1通过，触发节点2
+  const node1 = document.querySelectorAll('.approval-node')[0];
+  const node2 = document.querySelectorAll('.approval-node')[1];
+  node1.querySelector('.node-status').innerHTML = '<span class="tag tag-green"><span class="dot"></span>已通过</span>';
+  node1.querySelector('.node-icon').className = 'node-icon done';
+  node1.querySelector('.node-icon').textContent = '✓';
+  node1.querySelector('.node-sub').textContent = '张经理 · 已于 2026-04-22 审批通过';
+  const btns = node1.querySelector('.node-body div:last-child');
+  if (btns) btns.remove();
+  node1.style.borderColor = '';
+  node1.style.boxShadow = '';
+  // 激活节点2
+  node2.style.opacity = '1';
+  node2.querySelector('.node-icon').className = 'node-icon pending';
+  node2.querySelector('.node-icon').textContent = '李';
+  node2.querySelector('.node-sub').textContent = '李总监 · 数据产品部 · 待审批';
+  node2.querySelector('.node-status').innerHTML = '<span class="tag tag-blue"><span class="dot"></span>审批中</span>';
+  node2.style.borderColor = 'var(--primary)';
+  node2.style.boxShadow = '0 0 0 2px rgba(78,110,242,.1)';
+  // 添加操作按钮
+  const body = node2.querySelector('.node-body');
+  const div = document.createElement('div');
+  div.style = 'display:flex;gap:8px;margin-top:10px;';
+  div.innerHTML = `
+    <button class="btn btn-default btn-sm" onclick="openModal('modal-review-data');showPreviewTab2('structure')">查看数据结构</button>
+    <button class="btn btn-default btn-sm" onclick="openModal('modal-review-data');showPreviewTab2('sample')">查看抽样数据</button>
+    <button class="btn btn-success btn-sm" onclick="approveNode2()">✓ 通过</button>
+    <button class="btn btn-danger-outline btn-sm">✗ 驳回</button>`;
+  body.appendChild(div);
+  showToast('节点1审批通过，已流转至数据部负责人');
+}
+
+function approveNode2() {
+  const node2 = document.querySelectorAll('.approval-node')[1];
+  node2.querySelector('.node-status').innerHTML = '<span class="tag tag-green"><span class="dot"></span>已通过</span>';
+  node2.querySelector('.node-icon').className = 'node-icon done';
+  node2.querySelector('.node-icon').textContent = '✓';
+  node2.querySelector('.node-sub').textContent = '李总监 · 已于 2026-04-22 审批通过';
+  const btns = node2.querySelector('.node-body div:last-child');
+  if (btns) btns.remove();
+  node2.style.borderColor = '';
+  node2.style.boxShadow = '';
+  // 步骤条更新
+  const steps = document.querySelectorAll('#page-approval .step');
+  steps[1].classList.remove('active');
+  steps[1].classList.add('done');
+  steps[1].querySelector('.step-circle').textContent = '✓';
+  const lines = document.querySelectorAll('#page-approval .step-line');
+  lines[1].classList.add('done');
+  steps[2].classList.add('done');
+  steps[2].querySelector('.step-circle').textContent = '✓';
+  // 成功提示
+  const alert = document.querySelector('#page-approval .alert');
+  alert.className = 'alert alert-success';
+  alert.innerHTML = '🎉 审批已全部通过！您已成为「充值中心订单数」的 AI 管理员，现在可以 <a href="#" onclick="showPage(\'key-manage\');return false;" style="color:var(--primary);font-weight:600;">前往 Key 管理</a> 为用户生成 API Key。';
+  showToast('审批全部通过，您已成为该数据集管理员');
+}
+
+function doAddUser() {
+  document.getElementById('add-user-body').innerHTML = `
+    <div style="text-align:center;padding:10px 0 16px;">
+      <div style="font-size:28px;margin-bottom:8px;">✅</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Key 已生成，授权成功</div>
+    </div>
+    <div style="font-size:12px;font-weight:500;margin-bottom:5px;">API Key</div>
+    <div class="key-display">dk_live_${Math.random().toString(36).substr(2,8)}${Math.random().toString(36).substr(2,8)}<button class="copy-btn" onclick="showToast('已复制')">复制</button></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">⚠️ 此 Key 仅显示一次，关闭后无法再次查看。</div>
+  `;
+  document.querySelector('#modal-add-user .modal-footer').innerHTML = `
+    <button class="btn btn-primary" onclick="closeModal('modal-add-user');showToast('用户已添加')">完成</button>
+  `;
+}
+</script>
+</body>
+</html>
