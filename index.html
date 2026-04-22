@@ -621,13 +621,30 @@ code{font-family:monospace;font-size:11px;background:#f1f3f9;color:var(--primary
     <div class="section-title">
       💾 缓存配置
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <span style="font-size:12px;color:var(--text-muted);">启用每日缓存</span>
-        <div class="toggle on" id="toggleCache" onclick="this.classList.toggle('on')"></div>
+        <span style="font-size:12px;color:var(--text-muted);">启用缓存</span>
+        <div class="toggle on" id="toggleCache" onclick="toggleCacheConfig()"></div>
       </label>
     </div>
-    <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
-      启用后每日凌晨 <strong>4:00</strong> 自动执行 SQL 并将结果缓存为文件，日间请求直接读缓存（响应更快，数据非实时）。
-      禁用则每次请求实时执行 SQL。
+    <div id="cache-config-area">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+        启用后按照下方定时规则自动执行 SQL 并将结果缓存为文件，日间请求直接读缓存（响应更快，数据非实时）。禁用则每次实时执行 SQL。
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;">
+        <div>
+          <label class="form-label" style="margin-bottom:5px;">Cron 表达式<span class="req">*</span></label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-ctrl" id="cron-expr" value="0 4 * * *" style="width:160px;font-family:monospace;" oninput="parseCron()">
+            <span style="font-size:12px;color:var(--text-muted);" id="cron-desc">每天 04:00 执行</span>
+          </div>
+          <div class="form-hint">格式：分 时 日 月 周　例：<code>0 4 * * *</code>（每天4点）&nbsp;<code>0 2 * * 1</code>（每周一2点）</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-default btn-sm" onclick="setCron('0 4 * * *','每天 04:00')">每天 4:00</button>
+          <button class="btn btn-default btn-sm" onclick="setCron('0 2 * * *','每天 02:00')">每天 2:00</button>
+          <button class="btn btn-default btn-sm" onclick="setCron('0 6 * * 1','每周一 06:00')">每周一</button>
+          <button class="btn btn-default btn-sm" onclick="setCron('0 3 1 * *','每月1日 03:00')">每月1日</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1153,6 +1170,33 @@ function approveNode2() {
   alert.className = 'alert alert-success';
   alert.innerHTML = '🎉 审批已全部通过！您已成为「充值中心订单数」的 AI 管理员，现在可以 <a href="#" onclick="showPage(\'key-manage\');return false;" style="color:var(--primary);font-weight:600;">前往 Key 管理</a> 为用户生成 API Key。';
   showToast('审批全部通过，您已成为该数据集管理员');
+}
+
+function toggleCacheConfig() {
+  const tog = document.getElementById('toggleCache');
+  tog.classList.toggle('on');
+  const area = document.getElementById('cache-config-area');
+  area.style.opacity = tog.classList.contains('on') ? '1' : '0.4';
+  area.style.pointerEvents = tog.classList.contains('on') ? '' : 'none';
+}
+
+function setCron(expr, desc) {
+  document.getElementById('cron-expr').value = expr;
+  document.getElementById('cron-desc').textContent = desc + ' 执行';
+}
+
+function parseCron() {
+  const v = document.getElementById('cron-expr').value.trim();
+  const parts = v.split(/\s+/);
+  const el = document.getElementById('cron-desc');
+  if (parts.length !== 5) { el.textContent = '格式不正确'; el.style.color = 'var(--danger)'; return; }
+  el.style.color = 'var(--text-muted)';
+  const [min, hour, day, month, week] = parts;
+  let desc = '';
+  if (week !== '*') { const wmap=['日','一','二','三','四','五','六']; desc = `每周${wmap[+week]||week} ${hour.padStart(2,'0')}:${min.padStart(2,'0')} 执行`; }
+  else if (day !== '*') { desc = `每月${day}日 ${hour.padStart(2,'0')}:${min.padStart(2,'0')} 执行`; }
+  else { desc = `每天 ${hour.padStart(2,'0')}:${min.padStart(2,'0')} 执行`; }
+  el.textContent = desc;
 }
 
 function doAddUser() {
