@@ -492,8 +492,7 @@ code{font-family:monospace;font-size:11px;background:#f1f3f9;color:var(--primary
         <div class="form-row-2">
           <div>
             <label class="form-label">单次返回上限<span class="tip">（默认 10,000 条）</span></label>
-            <input class="form-ctrl" type="number" value="10000">
-            <div class="form-hint">≤10,000 条返回 JSON；超出则返回文件（压缩包）</div>
+            <input class="form-ctrl" type="number" value="10000" max="1000000">
           </div>
           <div>
             <label class="form-label">日调用上限<span class="tip">（每个 Key）</span></label>
